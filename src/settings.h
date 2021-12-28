@@ -25,4 +25,10 @@
 // TubeID[x]  will trigger OutPinNr[x]
 // take care both array are have same size, no consistency check is done !!!
 char *TubeID[] = { "400662a94081", "444662a94081",  "42adb7ae43f81", "422662a94081", "465662a94081", "440db7ae43f81"};   // this are the TAGID
-int  OutPinNr[] = { 14, 15, 16, 17, 18, 19};  // this are the arduio output pins  (Arduino Mega)
+// int  OutPinNr[] = { 14, 15, 16, 17, 18, 19};  // this are the arduio output pins  (Arduino Mega)
+
+#define PulsePin 15
+#define ResetPin 14
+
+const int PulseLowTime = 100;
+const int PulseHighTime = 100;

@@ -31,7 +31,10 @@ String mkString(byte *buffer, byte bufferSize)
 // standard Arduino setup
 void setup()
 {
-
+  pinMode(PulsePin, OUTPUT);
+  pinMode(ResetPin, OUTPUT);
+  digitalWrite(PulsePin, LOW);
+  digitalWrite(ResetPin, LOW);
   Serial.begin(9600); // Initialize serial communications with the PC
   while (!Serial)
     ; // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
@@ -52,29 +55,47 @@ void setup()
 void loop()
 {
   String TagID;
-
   for (uint8_t reader = 0; reader < NR_OF_READERS; reader++)
   {
-    if (mfrc522[reader].PICC_IsNewCardPresent() && mfrc522[reader].PICC_ReadCardSerial())    // check if new tag detected
+    if (mfrc522[reader].PICC_IsNewCardPresent() && mfrc522[reader].PICC_ReadCardSerial()) // check if new tag detected
     {
       TagID = mkString(mfrc522[reader].uid.uidByte, mfrc522[reader].uid.size);
       Serial.print("RFID TAG read: ");
-      Serial.println(TagID);
+      Serial.print(TagID);
 
-      for (int i = 0; i < sizeof TubeID / sizeof TubeID[0]; i++)  // loop through IDs and cehck if match found
+      for (int TubeNr = 0; TubeNr < sizeof TubeID / sizeof TubeID[0]; TubeNr++) // loop through IDs and check if match found
       {
-        digitalWrite(OutPinNr[i], true); // reset all Output
-        if (String(TubeID[i]) == TagID)
+        //  digitalWrite(OutPinNr[i], true); // reset all Output
+        if (String(TubeID[TubeNr]) == TagID)
         {
           Serial.print("Tube #");
-          Serial.print(i + 1);
-          Serial.print(" detected, Switch Arduino PIN: ");
-          Serial.println(OutPinNr[i]);
-          digitalWrite(OutPinNr[i], false); // set output to low (Itrain feedback are low active)
+          Serial.print(TubeNr + 1);
+          Serial.println(" detected. ");
+          //    Serial.println(OutPinNr[i]);
+
+          digitalWrite(ResetPin, LOW); // set reset to low to reset counter in iTrain
+          delay(PulseLowTime);
+          for (int pulse = 0; pulse < TubeNr + 1; pulse++)
+          {
+            digitalWrite(PulsePin, LOW);
+            delay(PulseLowTime);
+            digitalWrite(PulsePin, HIGH);
+            delay(PulseHighTime);
+            //    digitalWrite(PulsePin, LOW);
+          }
+        
+
+          delay(PulseHighTime);
+          digitalWrite(ResetPin, HIGH); // set reset to low to indicate all pulses sent
+          digitalWrite(PulsePin, HIGH);
+
+           delay(PulseHighTime);
+          digitalWrite(ResetPin, LOW); // set reset to low to indicate all pulses sent
+          digitalWrite(PulsePin, LOW);
         }
       }
-      mfrc522[reader].PICC_HaltA(); // Halt PICC
-      mfrc522[reader].PCD_StopCrypto1();   // Stop encryption on PCD
-    } 
-  }   
+      mfrc522[reader].PICC_HaltA();      // Halt PICC
+      mfrc522[reader].PCD_StopCrypto1(); // Stop encryption on PCD
+    }
+  }
 }
